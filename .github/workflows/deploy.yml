@@ -45,6 +45,15 @@ jobs:
             ${{ env.IMAGE_PREFIX }}-api:latest
             ${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
 
+      - name: Build & push controller (autoscaler)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./controller
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-controller:latest
+            ${{ env.IMAGE_PREFIX }}-controller:${{ github.sha }}
+
       - name: Build & push nginx (SPA + load balancer)
         uses: docker/build-push-action@v6
         with:
