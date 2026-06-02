@@ -1,12 +1,25 @@
 # Production stack — pulls pre-built images from GHCR (set by CI/CD).
-# A single Nginx image serves the Vue SPA and load balances the API tier.
-# Usage on the server (env vars come from ~/cloudcrm/.env):
-#   docker compose --env-file .env -f docker-compose.prod.yml up -d --scale api=3
+# Tuned for a 1 GB-RAM box: hard memory limits per service, postgres
+# trimmed below 64 MB working set, default API scale = 1 so the user can
+# bump it from the dashboard when they actually need extra capacity.
+#
+# Footprint at idle (approx): db 50 MB + api 80 MB + controller 50 MB +
+# nginx 10 MB = ~190 MB, leaving plenty of headroom for the OS and pulls.
 name: cloudcrm
 
 services:
   db:
     image: postgres:16-alpine
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - effective_cache_size=128MB
+      - -c
+      - max_connections=50
+      - -c
+      - work_mem=2MB
     environment:
       POSTGRES_USER: crm
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crm}
@@ -21,6 +34,8 @@ services:
       timeout: 3s
       retries: 10
     restart: unless-stopped
+    mem_limit: 192m
+    mem_reservation: 96m
 
   api:
     image: ${IMAGE_PREFIX}-api:latest
@@ -29,6 +44,9 @@ services:
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY missing — populate .env on the server (deploy workflow generates it on first run)}
       INSTANCE_ZONE: az-a
       CORS_ORIGINS: "*"
+      # Single uvicorn worker is plenty for a 1 vCPU box — adding workers
+      # only burns RAM with no throughput win.
+      WEB_CONCURRENCY: "1"
     depends_on:
       db:
         condition: service_healthy
@@ -37,6 +55,8 @@ services:
     expose:
       - "8000"
     restart: unless-stopped
+    mem_limit: 192m
+    mem_reservation: 96m
 
   controller:
     # Control plane — scales the API tier through the Docker Engine API and
@@ -49,7 +69,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://crm:${POSTGRES_PASSWORD:-crm}@db:5432/crm
       SECRET_KEY: ${SECRET_KEY}
       MIN_INSTANCES: "1"
-      MAX_INSTANCES: "6"
+      MAX_INSTANCES: "4"
       COOLDOWN_SECONDS: "15"
       TARGET_RPS_HIGH: "8"
       TARGET_RPS_LOW: "2"
@@ -63,6 +83,8 @@ services:
     expose:
       - "9000"
     restart: unless-stopped
+    mem_limit: 128m
+    mem_reservation: 64m
 
   nginx:
     # Single Nginx: serves the built Vue SPA and load balances the API tier.
@@ -76,6 +98,8 @@ services:
       - private_net
       - public_net
     restart: unless-stopped
+    mem_limit: 64m
+    mem_reservation: 16m
 
 networks:
   public_net:

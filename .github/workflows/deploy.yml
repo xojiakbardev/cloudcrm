@@ -112,7 +112,9 @@ jobs:
             # already present, so we don't redownload it on every deploy.
             docker compose --env-file .env -f docker-compose.prod.yml pull api controller nginx
 
-            docker compose --env-file .env -f docker-compose.prod.yml up -d --scale api=3 --remove-orphans
+            # Start with a single API replica to fit a 1 GB box at idle.
+            # The user can scale up from the dashboard when they need more.
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --scale api=1 --remove-orphans
 
             # Drop every image not currently used by a running container
             # (old GHCR builds, dangling layers, anything left over).
