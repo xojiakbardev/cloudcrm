@@ -17,6 +17,13 @@ const STAGE_BADGE = {
   won: 'badge-green',
   lost: 'badge-red',
 }
+const STAGE_LABEL = {
+  new: 'Yangi',
+  qualified: 'Saralangan',
+  proposal: 'Taklif',
+  won: 'Yutilgan',
+  lost: 'Yo\'qotilgan',
+}
 
 const form = reactive({ title: '', amount: 0, stage: 'new', customer_id: null })
 
@@ -67,7 +74,7 @@ async function save() {
 }
 
 async function remove(d) {
-  if (confirm(`Delete deal "${d.title}"?`)) {
+  if (confirm(`"${d.title}" bitimini o'chiramizmi?`)) {
     await crm.deleteDeal(d.id)
   }
 }
@@ -79,11 +86,11 @@ onMounted(load)
   <div>
     <header class="page-head">
       <div>
-        <h1>Deals</h1>
-        <p class="text-muted">{{ crm.deals.length }} opportunities</p>
+        <h1>Bitimlar</h1>
+        <p class="text-muted">{{ crm.deals.length }} ta imkoniyat</p>
       </div>
       <button class="btn btn-primary" @click="openCreate">
-        <Icon name="plus" :size="16" /> Add Deal
+        <Icon name="plus" :size="16" /> Bitim qo'shish
       </button>
     </header>
 
@@ -91,10 +98,10 @@ onMounted(load)
       <table class="table">
         <thead>
           <tr>
-            <th>Deal</th>
-            <th>Customer</th>
-            <th>Amount</th>
-            <th>Stage</th>
+            <th>Bitim</th>
+            <th>Mijoz</th>
+            <th>Summa</th>
+            <th>Bosqich</th>
             <th></th>
           </tr>
         </thead>
@@ -103,49 +110,49 @@ onMounted(load)
             <td><strong>{{ d.title }}</strong></td>
             <td>{{ customerName[d.customer_id] || '—' }}</td>
             <td class="mono">{{ money(d.amount) }}</td>
-            <td><span class="badge" :class="STAGE_BADGE[d.stage]">{{ d.stage }}</span></td>
+            <td><span class="badge" :class="STAGE_BADGE[d.stage]">{{ STAGE_LABEL[d.stage] || d.stage }}</span></td>
             <td>
               <div class="row-actions">
-                <button class="btn btn-ghost btn-sm" @click="openEdit(d)" aria-label="Edit"><Icon name="edit" :size="15" /></button>
-                <button class="btn btn-ghost btn-sm" @click="remove(d)" aria-label="Delete"><Icon name="trash" :size="15" /></button>
+                <button class="btn btn-ghost btn-sm" @click="openEdit(d)" aria-label="Tahrirlash"><Icon name="edit" :size="15" /></button>
+                <button class="btn btn-ghost btn-sm" @click="remove(d)" aria-label="O'chirish"><Icon name="trash" :size="15" /></button>
               </div>
             </td>
           </tr>
           <tr v-if="crm.deals.length === 0">
-            <td colspan="5" class="empty">No deals yet.</td>
+            <td colspan="5" class="empty">Hozircha bitim yo'q.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <Modal :open="modalOpen" :title="editingId ? 'Edit Deal' : 'Add Deal'" @close="modalOpen = false">
+    <Modal :open="modalOpen" :title="editingId ? 'Bitimni tahrirlash' : 'Bitim qo\'shish'" @close="modalOpen = false">
       <form @submit.prevent="save">
         <div class="form-group">
-          <label class="field-label">Title *</label>
+          <label class="field-label">Sarlavha *</label>
           <input class="input" v-model="form.title" required />
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="field-label">Amount ($)</label>
+            <label class="field-label">Summa ($)</label>
             <input class="input" type="number" min="0" step="100" v-model.number="form.amount" />
           </div>
           <div class="form-group">
-            <label class="field-label">Stage</label>
+            <label class="field-label">Bosqich</label>
             <select class="select" v-model="form.stage">
-              <option v-for="s in STAGES" :key="s" :value="s">{{ s }}</option>
+              <option v-for="s in STAGES" :key="s" :value="s">{{ STAGE_LABEL[s] }}</option>
             </select>
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label">Customer *</label>
+          <label class="field-label">Mijoz *</label>
           <select class="select" v-model="form.customer_id" required>
             <option v-for="c in crm.customers" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" @click="modalOpen = false">Cancel</button>
+          <button type="button" class="btn btn-ghost" @click="modalOpen = false">Bekor qilish</button>
           <button type="submit" class="btn btn-primary" :disabled="saving">
-            {{ saving ? 'Saving...' : 'Save' }}
+            {{ saving ? "Saqlanmoqda..." : 'Saqlash' }}
           </button>
         </div>
       </form>

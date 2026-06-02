@@ -58,9 +58,15 @@ async function save() {
 }
 
 async function remove(c) {
-  if (confirm(`Delete customer "${c.name}"?`)) {
+  if (confirm(`"${c.name}" mijozini o'chiramizmi?`)) {
     await crm.deleteCustomer(c.id)
   }
+}
+
+const STATUS_LABEL = {
+  active: 'Faol',
+  lead: 'Yo\'naltirilgan',
+  churned: 'Ketgan',
 }
 
 onMounted(load)
@@ -70,24 +76,24 @@ onMounted(load)
   <div>
     <header class="page-head">
       <div>
-        <h1>Customers</h1>
-        <p class="text-muted">{{ crm.customers.length }} records</p>
+        <h1>Mijozlar</h1>
+        <p class="text-muted">{{ crm.customers.length }} ta yozuv</p>
       </div>
       <button class="btn btn-primary" @click="openCreate">
-        <Icon name="plus" :size="16" /> Add Customer
+        <Icon name="plus" :size="16" /> Mijoz qo'shish
       </button>
     </header>
 
     <div class="toolbar card">
       <div class="search-box">
         <Icon name="search" :size="16" class="search-icon" />
-        <input class="input" placeholder="Search name or company..." v-model="search" @input="load" />
+        <input class="input" placeholder="Ism yoki kompaniya bo'yicha qidirish..." v-model="search" @input="load" />
       </div>
       <select class="select status-select" v-model="statusFilter" @change="load">
-        <option value="">All statuses</option>
-        <option value="lead">Lead</option>
-        <option value="active">Active</option>
-        <option value="churned">Churned</option>
+        <option value="">Barcha holatlar</option>
+        <option value="lead">Yo'naltirilgan</option>
+        <option value="active">Faol</option>
+        <option value="churned">Ketgan</option>
       </select>
     </div>
 
@@ -95,10 +101,10 @@ onMounted(load)
       <table class="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Company</th>
-            <th>Contact</th>
-            <th>Status</th>
+            <th>Ism</th>
+            <th>Kompaniya</th>
+            <th>Aloqa</th>
+            <th>Holat</th>
             <th></th>
           </tr>
         </thead>
@@ -110,25 +116,25 @@ onMounted(load)
               <div>{{ c.email || '—' }}</div>
               <div class="text-muted mono small">{{ c.phone || '' }}</div>
             </td>
-            <td><span class="badge" :class="STATUS_BADGE[c.status] || 'badge-gray'">{{ c.status }}</span></td>
+            <td><span class="badge" :class="STATUS_BADGE[c.status] || 'badge-gray'">{{ STATUS_LABEL[c.status] || c.status }}</span></td>
             <td>
               <div class="row-actions">
-                <button class="btn btn-ghost btn-sm" @click="openEdit(c)" aria-label="Edit"><Icon name="edit" :size="15" /></button>
-                <button class="btn btn-ghost btn-sm" @click="remove(c)" aria-label="Delete"><Icon name="trash" :size="15" /></button>
+                <button class="btn btn-ghost btn-sm" @click="openEdit(c)" aria-label="Tahrirlash"><Icon name="edit" :size="15" /></button>
+                <button class="btn btn-ghost btn-sm" @click="remove(c)" aria-label="O'chirish"><Icon name="trash" :size="15" /></button>
               </div>
             </td>
           </tr>
           <tr v-if="crm.customers.length === 0">
-            <td colspan="5" class="empty">No customers found.</td>
+            <td colspan="5" class="empty">Mijoz topilmadi.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <Modal :open="modalOpen" :title="editingId ? 'Edit Customer' : 'Add Customer'" @close="modalOpen = false">
+    <Modal :open="modalOpen" :title="editingId ? 'Mijozni tahrirlash' : 'Mijoz qo\'shish'" @close="modalOpen = false">
       <form @submit.prevent="save">
         <div class="form-group">
-          <label class="field-label">Name *</label>
+          <label class="field-label">Ism *</label>
           <input class="input" v-model="form.name" required />
         </div>
         <div class="form-row">
@@ -137,30 +143,30 @@ onMounted(load)
             <input class="input" type="email" v-model="form.email" />
           </div>
           <div class="form-group">
-            <label class="field-label">Phone</label>
+            <label class="field-label">Telefon</label>
             <input class="input" v-model="form.phone" />
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label">Company</label>
+          <label class="field-label">Kompaniya</label>
           <input class="input" v-model="form.company" />
         </div>
         <div class="form-group">
-          <label class="field-label">Status</label>
+          <label class="field-label">Holat</label>
           <select class="select" v-model="form.status">
-            <option value="lead">Lead</option>
-            <option value="active">Active</option>
-            <option value="churned">Churned</option>
+            <option value="lead">Yo'naltirilgan</option>
+            <option value="active">Faol</option>
+            <option value="churned">Ketgan</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="field-label">Notes</label>
+          <label class="field-label">Izohlar</label>
           <textarea class="textarea" rows="3" v-model="form.notes"></textarea>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" @click="modalOpen = false">Cancel</button>
+          <button type="button" class="btn btn-ghost" @click="modalOpen = false">Bekor qilish</button>
           <button type="submit" class="btn btn-primary" :disabled="saving">
-            {{ saving ? 'Saving...' : 'Save' }}
+            {{ saving ? "Saqlanmoqda..." : 'Saqlash' }}
           </button>
         </div>
       </form>

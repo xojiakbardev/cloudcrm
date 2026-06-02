@@ -7,10 +7,10 @@ const auth = useAuthStore()
 const router = useRouter()
 
 const nav = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/customers', label: 'Customers', icon: 'users' },
-  { to: '/deals', label: 'Deals', icon: 'deals' },
-  { to: '/infrastructure', label: 'Infrastructure', icon: 'network' },
+  { to: '/dashboard', label: 'Boshqaruv paneli', icon: 'dashboard' },
+  { to: '/customers', label: 'Mijozlar', icon: 'users' },
+  { to: '/deals', label: 'Bitimlar', icon: 'deals' },
+  { to: '/infrastructure', label: 'Infratuzilma', icon: 'network' },
 ]
 
 function logout() {
@@ -52,7 +52,7 @@ function logout() {
         </div>
         <button class="btn btn-ghost logout-btn" @click="logout">
           <Icon name="logout" :size="16" />
-          <span>Logout</span>
+          <span>Chiqish</span>
         </button>
       </div>
     </aside>

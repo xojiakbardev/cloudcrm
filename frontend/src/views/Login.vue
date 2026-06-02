@@ -19,7 +19,7 @@ async function submit() {
     await auth.login(email.value, password.value)
     router.push('/dashboard')
   } catch (e) {
-    error.value = e.response?.data?.detail || 'Login failed. Check your credentials.'
+    error.value = e.response?.data?.detail || "Kirib bo'lmadi. Login ma'lumotlarini tekshiring."
   } finally {
     loading.value = false
   }
@@ -34,7 +34,7 @@ async function submit() {
           <Icon name="activity" :size="22" />
         </div>
         <h1>CloudCRM</h1>
-        <p class="text-muted">Sign in to your workspace</p>
+        <p class="text-muted">Tizimga kiring</p>
       </div>
 
       <form @submit.prevent="submit">
@@ -43,14 +43,14 @@ async function submit() {
           <input id="email" class="input" type="email" v-model="email" required />
         </div>
         <div class="form-group">
-          <label class="field-label" for="password">Password</label>
+          <label class="field-label" for="password">Parol</label>
           <input id="password" class="input" type="password" v-model="password" required />
         </div>
 
         <p v-if="error" class="error">{{ error }}</p>
 
         <button class="btn btn-primary login-btn" type="submit" :disabled="loading">
-          {{ loading ? 'Signing in...' : 'Sign in' }}
+          {{ loading ? "Kirilmoqda..." : 'Kirish' }}
         </button>
       </form>
 

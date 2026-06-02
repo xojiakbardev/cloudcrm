@@ -39,7 +39,7 @@ function renderCharts() {
       labels: stageLabels,
       datasets: [
         {
-          label: 'Deals',
+          label: 'Bitimlar',
           data: stageData,
           backgroundColor: stageLabels.map((s) => STAGE_COLORS[s] || '#3b82f6'),
           borderRadius: 6,
@@ -87,25 +87,25 @@ onMounted(async () => {
   <div>
     <header class="page-head">
       <div>
-        <h1>Dashboard</h1>
-        <p class="text-muted">Sales pipeline overview</p>
+        <h1>Boshqaruv paneli</h1>
+        <p class="text-muted">Savdo jarayoni umumiy ko'rinishi</p>
       </div>
     </header>
 
     <div v-if="stats" class="stats-grid">
-      <StatCard label="Total Customers" :value="stats.total_customers" icon="users" accent="blue" />
-      <StatCard label="Active Customers" :value="stats.active_customers" icon="users" accent="green" />
-      <StatCard label="Pipeline Value" :value="money(stats.pipeline_value)" icon="deals" accent="amber" />
-      <StatCard label="Won Value" :value="money(stats.won_value)" icon="zap" accent="green" />
+      <StatCard label="Jami mijozlar" :value="stats.total_customers" icon="users" accent="blue" />
+      <StatCard label="Faol mijozlar" :value="stats.active_customers" icon="users" accent="green" />
+      <StatCard label="Pipeline qiymati" :value="money(stats.pipeline_value)" icon="deals" accent="amber" />
+      <StatCard label="Yutilgan bitimlar" :value="money(stats.won_value)" icon="zap" accent="green" />
     </div>
 
     <div class="charts-grid">
       <div class="card">
-        <h3 class="chart-title">Deals by Stage</h3>
+        <h3 class="chart-title">Bosqich bo'yicha bitimlar</h3>
         <div class="chart-box"><canvas ref="stageCanvas"></canvas></div>
       </div>
       <div class="card">
-        <h3 class="chart-title">Customers by Status</h3>
+        <h3 class="chart-title">Holat bo'yicha mijozlar</h3>
         <div class="chart-box"><canvas ref="statusCanvas"></canvas></div>
       </div>
     </div>
