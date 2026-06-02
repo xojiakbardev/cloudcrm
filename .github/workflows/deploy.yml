@@ -88,9 +88,12 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
+          command_timeout: 30m
           script: |
+            set -e
             cd ~/cloudcrm
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
             # Generate the JWT signing key once and reuse it across deploys.
             if [ ! -f .env ]; then
               {
@@ -101,7 +104,16 @@ jobs:
             else
               grep -q '^IMAGE_PREFIX=' .env || echo "IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}" >> .env
             fi
-            docker compose --env-file .env -f docker-compose.prod.yml pull
-            # Start with 3 API replicas behind the load balancer.
+
+            # Free disk before the pull so a slow link doesn't fill /var/lib/docker.
+            docker image prune -af --filter "until=1h" || true
+
+            # Pull only the images we ship — postgres uses its cached copy if
+            # already present, so we don't redownload it on every deploy.
+            docker compose --env-file .env -f docker-compose.prod.yml pull api controller nginx
+
             docker compose --env-file .env -f docker-compose.prod.yml up -d --scale api=3 --remove-orphans
-            docker image prune -f
+
+            # Drop every image not currently used by a running container
+            # (old GHCR builds, dangling layers, anything left over).
+            docker image prune -af
