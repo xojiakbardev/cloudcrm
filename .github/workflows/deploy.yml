@@ -6,7 +6,10 @@ name: Deploy
 #   SERVER_USER      - SSH user
 #   SERVER_SSH_KEY   - private SSH key (PEM)
 #   SERVER_PORT      - SSH port (optional, default 22)
-#   PROD_SECRET_KEY  - JWT secret for the backend
+#
+# The JWT signing key lives in ~/cloudcrm/.env on the server (generated
+# automatically on first deploy, reused on every subsequent deploy so
+# existing user sessions keep working).
 on:
   push:
     branches: ["main"]
@@ -65,7 +68,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
+          port: 22
           source: "docker-compose.prod.yml"
           target: "~/cloudcrm"
 
@@ -75,13 +78,21 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
+          port: 22
           script: |
             cd ~/cloudcrm
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            export IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
-            export PROD_SECRET_KEY="${{ secrets.PROD_SECRET_KEY }}"
-            docker compose -f docker-compose.prod.yml pull
+            # Generate the JWT signing key once and reuse it across deploys.
+            if [ ! -f .env ]; then
+              {
+                echo "IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}"
+                echo "SECRET_KEY=$(openssl rand -hex 32)"
+              } > .env
+              chmod 600 .env
+            else
+              grep -q '^IMAGE_PREFIX=' .env || echo "IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}" >> .env
+            fi
+            docker compose --env-file .env -f docker-compose.prod.yml pull
             # Start with 3 API replicas behind the load balancer.
-            docker compose -f docker-compose.prod.yml up -d --scale api=3 --remove-orphans
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --scale api=3 --remove-orphans
             docker image prune -f

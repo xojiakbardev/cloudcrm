@@ -26,7 +26,7 @@ services:
     image: ${IMAGE_PREFIX}-api:latest
     environment:
       DATABASE_URL: postgresql+psycopg2://crm:${POSTGRES_PASSWORD:-crm}@db:5432/crm
-      SECRET_KEY: ${PROD_SECRET_KEY:?PROD_SECRET_KEY is required}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY missing — populate .env on the server (deploy workflow generates it on first run)}
       INSTANCE_ZONE: az-a
       CORS_ORIGINS: "*"
     depends_on:
