@@ -1,0 +1,87 @@
+name: Deploy
+
+# Deploys to the production server after CI passes on main.
+# Requires these repository secrets:
+#   SERVER_HOST      - server IP or hostname
+#   SERVER_USER      - SSH user
+#   SERVER_SSH_KEY   - private SSH key (PEM)
+#   SERVER_PORT      - SSH port (optional, default 22)
+#   PROD_SECRET_KEY  - JWT secret for the backend
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-api:latest
+            ${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
+
+      - name: Build & push nginx (SPA + load balancer)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: nginx/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-nginx:latest
+            ${{ env.IMAGE_PREFIX }}-nginx:${{ github.sha }}
+
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy compose files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: "docker-compose.prod.yml"
+          target: "~/cloudcrm"
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            cd ~/cloudcrm
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            export IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
+            export PROD_SECRET_KEY="${{ secrets.PROD_SECRET_KEY }}"
+            docker compose -f docker-compose.prod.yml pull
+            # Start with 3 API replicas behind the load balancer.
+            docker compose -f docker-compose.prod.yml up -d --scale api=3 --remove-orphans
+            docker image prune -f

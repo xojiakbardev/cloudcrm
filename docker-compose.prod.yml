@@ -1,0 +1,60 @@
+# Production stack — pulls pre-built images from GHCR (set by CI/CD).
+# A single Nginx image serves the Vue SPA and load balances the API tier.
+# Usage on the server:
+#   export IMAGE_PREFIX=ghcr.io/<owner>/<repo>
+#   export PROD_SECRET_KEY=<long-random-string>
+#   docker compose -f docker-compose.prod.yml up -d --scale api=3
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crm}
+      POSTGRES_DB: crm
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - private_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    image: ${IMAGE_PREFIX}-api:latest
+    environment:
+      DATABASE_URL: postgresql+psycopg2://crm:${POSTGRES_PASSWORD:-crm}@db:5432/crm
+      SECRET_KEY: ${PROD_SECRET_KEY:?PROD_SECRET_KEY is required}
+      INSTANCE_ZONE: az-a
+      CORS_ORIGINS: "*"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - private_net
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  nginx:
+    # Single Nginx: serves the built Vue SPA and load balances the API tier.
+    image: ${IMAGE_PREFIX}-nginx:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - private_net
+      - public_net
+    restart: unless-stopped
+
+networks:
+  public_net:
+    driver: bridge
+  private_net:
+    driver: bridge
+
+volumes:
+  db_data:

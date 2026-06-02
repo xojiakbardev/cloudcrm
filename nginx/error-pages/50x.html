@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Service unavailable · CloudCRM</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --accent: #059669;
+      --destructive: #dc2626;
+      --bg: #f8fafc;
+      --fg: #0f172a;
+      --muted: #64748b;
+      --border: #e4ecfc;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Fira Sans', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #fef2f2 0%, var(--bg) 100%);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
+      padding: 3rem 2.5rem;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+    }
+    .mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: var(--destructive);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .code {
+      font-family: 'Fira Code', ui-monospace, monospace;
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--destructive);
+      margin-bottom: 0.5rem;
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    p { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.75rem; }
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: opacity 200ms ease;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 4h20v6H2zM2 14h20v6H2z" />
+        <path d="M6 7h.01M6 17h.01" />
+      </svg>
+    </div>
+    <div class="code">5xx</div>
+    <h1>Service temporarily unavailable</h1>
+    <p>The backend instances are starting up or under heavy load. Please try again in a moment.</p>
+    <a class="btn" href="/" onclick="setTimeout(()=>location.reload(),50)">Retry</a>
+  </div>
+</body>
+</html>

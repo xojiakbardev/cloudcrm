@@ -1,0 +1,15 @@
+# Build context for nginx/Dockerfile is the project root.
+# Keep large / irrelevant files out of the build context.
+**/node_modules
+**/dist
+**/__pycache__
+**/.venv
+**/.pytest_cache
+.git
+.github
+backend
+*.md
+**/.env
+!**/.env.example
+*.log
+.DS_Store

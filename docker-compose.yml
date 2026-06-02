@@ -1,0 +1,97 @@
+# CloudCRM full stack — demonstrates the BTEC Unit 6 cloud network design:
+#
+#   nginx (SPA host + Load Balancer) ──> api x N (FastAPI) ──> db (PostgreSQL)
+#
+# A single Nginx service serves the Vue SPA and load balances the API tier.
+# Scale the API tier to demonstrate load balancing / auto-scaling:
+#   docker compose up -d --scale api=4
+#
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: crm
+      POSTGRES_DB: crm
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - private_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    # No host port mapping and no container_name: this lets Docker Compose
+    # run multiple replicas (--scale api=N) behind the load balancer.
+    environment:
+      DATABASE_URL: postgresql+psycopg2://crm:crm@db:5432/crm
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      # Each replica derives a unique INSTANCE_ID from its hostname (container id).
+      INSTANCE_ZONE: az-a
+      CORS_ORIGINS: "*"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - private_net
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  nginx:
+    # Single Nginx: serves the built Vue SPA and load balances the API tier.
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+      - controller
+    networks:
+      - private_net
+      - public_net
+    restart: unless-stopped
+
+  controller:
+    # Control plane: scales the API tier via the Docker Engine API.
+    # SECURITY: mounting docker.sock grants host-level control. Demo only —
+    # all mutating endpoints require a JWT, and scaling is bounded (min/max).
+    build: ./controller
+    environment:
+      COMPOSE_PROJECT_NAME: crm
+      API_SERVICE: api
+      API_NETWORK: crm_private_net
+      DATABASE_URL: postgresql+psycopg2://crm:crm@db:5432/crm
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      MIN_INSTANCES: "1"
+      MAX_INSTANCES: "6"
+      COOLDOWN_SECONDS: "15"
+      TARGET_RPS_HIGH: "8"
+      TARGET_RPS_LOW: "2"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - private_net
+    expose:
+      - "9000"
+    restart: unless-stopped
+
+# Two networks model the public subnet (internet-facing) and the private
+# subnet (internal services), mirroring a VPC public/private split.
+networks:
+  public_net:
+    driver: bridge
+  private_net:
+    driver: bridge
+    internal: false
+
+volumes:
+  db_data:

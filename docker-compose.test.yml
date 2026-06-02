@@ -1,0 +1,8 @@
+# Local load-test override — runs CRM on port 8090 so it doesn't collide
+# with other dev stacks (e.g. when hotelos already binds 8080).
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build --scale api=3
+services:
+  nginx:
+    # !override replaces the parent list instead of appending to it.
+    ports: !override
+      - "8090:80"

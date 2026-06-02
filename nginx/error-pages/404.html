@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Page not found · CloudCRM</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --accent: #059669;
+      --bg: #f8fafc;
+      --fg: #0f172a;
+      --muted: #64748b;
+      --border: #e4ecfc;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Fira Sans', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #eff6ff 0%, var(--bg) 100%);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
+      padding: 3rem 2.5rem;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+    }
+    .mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .code {
+      font-family: 'Fira Code', ui-monospace, monospace;
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    p { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.75rem; }
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: opacity 200ms ease;
+    }
+    .btn:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+      </svg>
+    </div>
+    <div class="code">404</div>
+    <h1>Page not found</h1>
+    <p>The page you are looking for doesn't exist or has been moved.</p>
+    <a class="btn" href="/">Back to CloudCRM</a>
+  </div>
+</body>
+</html>
