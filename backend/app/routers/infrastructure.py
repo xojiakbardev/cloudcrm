@@ -12,7 +12,7 @@ appear when the service is scaled out (`docker compose up --scale api=N`).
 """
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -196,12 +196,28 @@ def deregister_instance(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    """Remove a stale instance row from the registry."""
+    """Remove a stale instance row from the registry.
+
+    Refuses to delete the last healthy heartbeat so the dashboard always has
+    at least one live instance — the user explicitly asked for this guard.
+    """
     instance = (
         db.query(InstanceHeartbeat)
         .filter(InstanceHeartbeat.instance_id == instance_id)
         .first()
     )
-    if instance:
-        db.delete(instance)
-        db.commit()
+    if instance is None:
+        return
+    if _is_healthy(instance):
+        healthy_total = sum(
+            1
+            for h in db.query(InstanceHeartbeat).all()
+            if _is_healthy(h)
+        )
+        if healthy_total <= 1:
+            raise HTTPException(
+                status_code=409,
+                detail="Cannot delete the last healthy instance — drain or scale down via the controller first.",
+            )
+    db.delete(instance)
+    db.commit()

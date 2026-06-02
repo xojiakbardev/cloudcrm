@@ -9,7 +9,7 @@ import threading
 import time
 from datetime import datetime
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import bindparam, create_engine, text
 
 from app.config import settings
 from app.docker_manager import manager
@@ -70,8 +70,39 @@ class AutoScaler:
         instances = max(manager.current_count(), 1)
         return (delta / dt) / instances
 
+    # ---- stale heartbeat sweeper ----
+    def _sweep_stale_heartbeats(self) -> int:
+        """Delete heartbeat rows for instance IDs whose container no longer exists.
+
+        Runs on every tick (even when the autoscaler is disabled) so the
+        Backend Instances table stops showing zombie rows after scale-down.
+        """
+        try:
+            live_ids = {c["id"] for c in manager.list_api_containers() if c["status"] == "running"}
+        except Exception:
+            return 0
+        if not live_ids:
+            # Don't wipe the table if Docker temporarily reports no containers.
+            return 0
+        with self._engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    "DELETE FROM instance_heartbeats "
+                    "WHERE instance_id NOT IN :live"
+                ).bindparams(bindparam("live", expanding=True)),
+                {"live": list(live_ids)},
+            )
+            removed = result.rowcount or 0
+        if removed:
+            # The next RPS sample would see a negative delta after the deletion;
+            # reset so we measure from a clean baseline.
+            self._prev_total = None
+            self._prev_time = None
+        return removed
+
     # ---- control loop ----
     def _tick(self):
+        self._sweep_stale_heartbeats()
         if not self.enabled:
             return
         rps = self._compute_rps_per_instance()

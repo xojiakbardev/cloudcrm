@@ -1,5 +1,6 @@
 """FastAPI application entrypoint for CloudCRM."""
 import os
+import threading
 import time
 from datetime import datetime
 
@@ -12,6 +13,11 @@ from app.database import Base, SessionLocal, engine
 from app.models import InstanceHeartbeat
 from app.routers import auth, customers, dashboard, deals, infrastructure
 from app.seed import seed
+
+# Refresh our heartbeat row this often, regardless of request traffic. The
+# infrastructure dashboard uses last_seen to flip instances between healthy
+# and unhealthy — without this the row would go stale during idle periods.
+HEARTBEAT_REFRESH_SECONDS = 5
 
 app = FastAPI(
     title="CloudCRM API",
@@ -55,6 +61,44 @@ def _wait_for_db(retries: int = 20, delay: float = 1.5) -> None:
             time.sleep(delay)
 
 
+def _refresh_heartbeat_loop() -> None:
+    """Keep our heartbeat row fresh so idle instances don't flip to unhealthy."""
+    while True:
+        try:
+            db = SessionLocal()
+            try:
+                now = datetime.utcnow()
+                updated = (
+                    db.query(InstanceHeartbeat)
+                    .filter(InstanceHeartbeat.instance_id == settings.instance_id)
+                    .update(
+                        {
+                            InstanceHeartbeat.last_seen: now,
+                            InstanceHeartbeat.status: "healthy",
+                        },
+                        synchronize_session=False,
+                    )
+                )
+                if updated == 0:
+                    db.add(
+                        InstanceHeartbeat(
+                            instance_id=settings.instance_id,
+                            zone=settings.instance_zone,
+                            status="healthy",
+                            request_count=0,
+                            last_seen=now,
+                            started_at=now,
+                        )
+                    )
+                db.commit()
+            finally:
+                db.close()
+        except Exception:
+            # Never let the heartbeat loop kill the process — the next tick retries.
+            pass
+        time.sleep(HEARTBEAT_REFRESH_SECONDS)
+
+
 @app.on_event("startup")
 def on_startup():
     # In tests the DB is provisioned by fixtures; skip the production bootstrap.
@@ -90,6 +134,8 @@ def on_startup():
         db.commit()
     finally:
         db.close()
+
+    threading.Thread(target=_refresh_heartbeat_loop, daemon=True).start()
 
 
 @app.get("/api/health")
