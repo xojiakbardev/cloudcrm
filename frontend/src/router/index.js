@@ -6,6 +6,8 @@ import Login from '../views/Login.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Customers from '../views/Customers.vue'
 import Deals from '../views/Deals.vue'
+import Products from '../views/Products.vue'
+import Orders from '../views/Orders.vue'
 import Infrastructure from '../views/Infrastructure.vue'
 
 const routes = [
@@ -18,6 +20,8 @@ const routes = [
       { path: 'dashboard', name: 'dashboard', component: Dashboard },
       { path: 'customers', name: 'customers', component: Customers },
       { path: 'deals', name: 'deals', component: Deals },
+      { path: 'products', name: 'products', component: Products },
+      { path: 'orders', name: 'orders', component: Orders },
       { path: 'infrastructure', name: 'infrastructure', component: Infrastructure },
     ],
   },

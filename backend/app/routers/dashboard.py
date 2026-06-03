@@ -1,10 +1,11 @@
 """Aggregated CRM metrics for the dashboard."""
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
-from sqlalchemy import func
+from sqlalchemy import func, extract
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Customer, Deal, User
+from app.models import Customer, Deal, Order, OrderItem, Product, User
 from app.schemas import DashboardStats
 from app.security import get_current_user
 
@@ -46,6 +47,50 @@ def stats(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
         .all()
     }
 
+    # ── Orders by status ───────────────────────────────────────────────
+    orders_by_status = {
+        status: count
+        for status, count in db.query(Order.status, func.count(Order.id))
+        .group_by(Order.status)
+        .all()
+    }
+
+    # ── Monthly revenue — last 6 months ───────────────────────────────
+    six_months_ago = datetime.utcnow() - timedelta(days=180)
+    monthly_rows = (
+        db.query(
+            extract("year", Order.created_at).label("yr"),
+            extract("month", Order.created_at).label("mo"),
+            func.coalesce(func.sum(Order.total_amount), 0.0).label("revenue"),
+        )
+        .filter(Order.created_at >= six_months_ago)
+        .filter(Order.status.in_(["delivered", "shipped", "confirmed"]))
+        .group_by("yr", "mo")
+        .order_by("yr", "mo")
+        .all()
+    )
+    monthly_revenue = {
+        f"{int(row.yr)}-{int(row.mo):02d}": float(row.revenue)
+        for row in monthly_rows
+    }
+
+    # ── Top 5 products by order quantity ──────────────────────────────
+    top_products_rows = (
+        db.query(
+            Product.name,
+            func.coalesce(func.sum(OrderItem.quantity), 0).label("qty"),
+        )
+        .join(OrderItem, OrderItem.product_id == Product.id)
+        .group_by(Product.id, Product.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .limit(5)
+        .all()
+    )
+    top_products = {
+        row.name[:28] + ("…" if len(row.name) > 28 else ""): int(row.qty)
+        for row in top_products_rows
+    }
+
     return DashboardStats(
         total_customers=total_customers,
         active_customers=active_customers,
@@ -55,4 +100,7 @@ def stats(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
         won_value=float(won_value),
         deals_by_stage=deals_by_stage,
         customers_by_status=customers_by_status,
+        orders_by_status=orders_by_status,
+        monthly_revenue=monthly_revenue,
+        top_products=top_products,
     )

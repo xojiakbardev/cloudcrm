@@ -11,7 +11,7 @@ from sqlalchemy import text
 from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app.models import InstanceHeartbeat
-from app.routers import auth, customers, dashboard, deals, infrastructure
+from app.routers import auth, customers, dashboard, deals, infrastructure, orders, products
 from app.seed import seed
 
 # Refresh our heartbeat row this often, regardless of request traffic. The
@@ -38,6 +38,8 @@ app.include_router(customers.router)
 app.include_router(deals.router)
 app.include_router(dashboard.router)
 app.include_router(infrastructure.router)
+app.include_router(orders.router)
+app.include_router(products.router)
 
 
 @app.middleware("http")

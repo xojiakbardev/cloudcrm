@@ -71,6 +71,73 @@ class DealOut(DealBase):
         from_attributes = True
 
 
+
+# ---- Products ----
+class ProductBase(BaseModel):
+    name: str
+    sku: str
+    category: Optional[str] = "General"
+    description: Optional[str] = None
+    price: float = 0.0
+    stock: int = 0
+    status: str = "active"
+
+
+class ProductCreate(ProductBase):
+    pass
+
+
+class ProductOut(ProductBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+
+# ---- Orders ----
+class OrderItemCreate(BaseModel):
+    product_id: int
+    quantity: int = 1
+    unit_price: float = 0.0
+
+
+class OrderItemOut(BaseModel):
+    id: int
+    product_id: int
+    quantity: int
+    unit_price: float
+
+    class Config:
+        from_attributes = True
+
+
+class OrderCreate(BaseModel):
+    customer_id: int
+    status: str = "pending"
+    notes: Optional[str] = None
+    items: List[OrderItemCreate] = []
+
+
+class OrderUpdate(BaseModel):
+    status: str
+    notes: Optional[str] = None
+
+
+class OrderOut(BaseModel):
+    id: int
+    customer_id: int
+    status: str
+    notes: Optional[str] = None
+    total_amount: float
+    created_at: datetime
+    items: List[OrderItemOut] = []
+
+    class Config:
+        from_attributes = True
+
+
 # ---- Dashboard ----
 class DashboardStats(BaseModel):
     total_customers: int
@@ -81,6 +148,9 @@ class DashboardStats(BaseModel):
     won_value: float
     deals_by_stage: dict
     customers_by_status: dict
+    orders_by_status: dict
+    monthly_revenue: dict
+    top_products: dict
 
 
 # ---- Infrastructure ----

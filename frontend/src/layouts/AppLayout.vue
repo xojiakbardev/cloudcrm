@@ -7,10 +7,12 @@ const auth = useAuthStore()
 const router = useRouter()
 
 const nav = [
-  { to: '/dashboard', label: 'Boshqaruv paneli', icon: 'dashboard' },
-  { to: '/customers', label: 'Mijozlar', icon: 'users' },
-  { to: '/deals', label: 'Bitimlar', icon: 'deals' },
-  { to: '/infrastructure', label: 'Infratuzilma', icon: 'network' },
+  { to: '/dashboard',      label: 'Boshqaruv paneli', icon: 'dashboard' },
+  { to: '/customers',      label: 'Mijozlar',          icon: 'users'     },
+  { to: '/deals',          label: 'Bitimlar',           icon: 'deals'     },
+  { to: '/products',       label: 'Mahsulotlar',        icon: 'package'   },
+  { to: '/orders',         label: 'Buyurtmalar',        icon: 'cart'      },
+  { to: '/infrastructure', label: 'Infratuzilma',       icon: 'network'   },
 ]
 
 function logout() {
