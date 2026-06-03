@@ -59,6 +59,8 @@ jobs:
         with:
           context: .
           file: nginx/Dockerfile
+          build-args: |
+            NGINX_CONFIG=nginx/nginx.prod.conf
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}-nginx:latest

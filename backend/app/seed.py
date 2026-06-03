@@ -1,4 +1,5 @@
 """Seed the database with an admin user and Faker-generated demo CRM data."""
+from datetime import datetime, timedelta
 import random
 
 from faker import Faker
@@ -10,6 +11,14 @@ from app.security import hash_password
 fake = Faker()
 Faker.seed(42)
 random.seed(42)
+
+
+def random_date_last_180_days():
+    days_ago = random.randint(1, 180)
+    hours_ago = random.randint(0, 23)
+    minutes_ago = random.randint(0, 59)
+    return datetime.utcnow() - timedelta(days=days_ago, hours=hours_ago, minutes=minutes_ago)
+
 
 CATEGORIES = [
     "Kiyim-kechak",
@@ -92,6 +101,7 @@ def seed(db: Session) -> None:
                 amount=amount,
                 stage=stage,
                 customer_id=customer.id,
+                created_at=random_date_last_180_days(),
             )
         )
     db.add_all(deals)
@@ -129,6 +139,7 @@ def seed(db: Session) -> None:
             status=status,
             notes=fake.sentence(nb_words=8) if random.random() > 0.5 else None,
             total_amount=0.0,
+            created_at=random_date_last_180_days(),
         )
         orders.append(order)
 

@@ -21,7 +21,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Branded error pages
 COPY nginx/error-pages /usr/share/nginx/html/error-pages
 # Load balancer + SPA config (replaces the default nginx.conf)
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
+ARG NGINX_CONFIG=nginx/nginx.conf
+COPY ${NGINX_CONFIG} /etc/nginx/nginx.conf
 
 EXPOSE 80
 
