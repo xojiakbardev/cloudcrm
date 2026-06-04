@@ -248,7 +248,6 @@ onMounted(async () => {
     <header class="page-head">
       <div>
         <h1>Boshqaruv paneli</h1>
-        <p class="text-muted">Savdo jarayoni va buyurtmalar tahlili umumiy ko'rinishi</p>
       </div>
     </header>
 
