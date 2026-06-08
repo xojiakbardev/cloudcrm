@@ -33,7 +33,7 @@ async function submit() {
         <div class="brand-mark">
           <Icon name="activity" :size="22" />
         </div>
-        <h1>CloudCRM</h1>
+        <h1>Kiyim kechak crm</h1>
         <p class="text-muted">Tizimga kiring</p>
       </div>
 

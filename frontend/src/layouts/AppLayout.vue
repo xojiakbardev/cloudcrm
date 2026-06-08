@@ -28,7 +28,7 @@ function logout() {
         <div class="brand-mark">
           <Icon name="activity" :size="20" />
         </div>
-        <span>CloudCRM</span>
+        <span>Kiyim kechak crm</span>
       </div>
 
       <nav class="nav">
